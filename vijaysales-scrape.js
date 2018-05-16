@@ -4,18 +4,17 @@ var URL = require('url-parse');
 const start_url = "https://www.vijaysales.com/Entertainment/Televisions/5/467";
 let pagesVisited = {};
 let promises = [];
-let pagesUrls = [];
 let numPagesVisited = 0;
 let pagesToVisit = [];
 let allinformation = [];
 let orgUrl = new URL(start_url);
 const baseUrl = orgUrl.protocol + "//" + orgUrl.hostname;
 
-pagesToVisit.push(start_url);
-crawl();
+//let MongoClient = require('mongodb').MongoClient
+//const mongourl = "mongodb://localhost:27017/"
 
 function crawl() {
-   if (pagesToVisit.length <= 0 ) {
+   if (pagesToVisit.length <= 0) {
       console.log("all pages have been visited");
       Promise.all(promises).then(function(values) {
             displayInformation();
@@ -32,7 +31,7 @@ function crawl() {
       crawl();
    }
    else {
-      // New page we haven't visited	
+      // New page we haven't visited  
       visitPage(nextPage, crawl);
    }
 }
@@ -59,9 +58,19 @@ async function visitPage(url, callback) {
 }
 
 function pageRequest(url, callback) {
+
+   var agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36';
+   var options = {
+      url: url,
+      headers: {
+         'User-Agent': agent,
+         'Content-Type': 'application/json; charset=UTF-8'
+      }
+   };
+
    return new Promise(function(resolve, reject) {
       // Asynchronous request and callback
-      request.get(url, function(err, response, body) {
+      request.get(options, function(err, response, body) {
          if (err) {
             reject(err);
             callback();
@@ -75,21 +84,93 @@ function pageRequest(url, callback) {
    });
 }
 
+var startindx = 1;
+var endindx = 12;
+
 function collectLinks($) {
    let links = $('div.vj-srch-prd-main div.vj-pnaaz-plst div#gd-row_4 div.pb-bx-srch a.vj-cur-pnter');
+   var count = $("div.vj-flt-tilt.vj-flt-lft  span").text().split("-");
+   var total_items = parseInt(count[0].trim());
 
- if(links!=""){  
-  links.each(function(){
-     var tv_link = $(this).attr("href");
-         if (tv_link in pagesToVisit) {}
-            else {
-               if (tv_link in pagesVisited) {}
-               else {
-                  pagesToVisit.push(tv_link);
-               }
+   if (links != "") {
+
+      if (startindx <= total_items) {
+
+         for (var i = startindx; i <= total_items; i += 12) {
+
+            var postdata = {
+               "CategoryID": "5",
+               "CityId": "1",
+               "FilterValueIDs": "467,:",
+               "FilterId": "2",
+               "Keywords": "",
+               "CategoryName": "",
+               "EndIndex": endindx,
+               "FilterName": "",
+               "FilterValueName": "",
+               "FlagPrice": "",
+               "InStockOnly": 0,
+               "MainFilterName": "",
+               "MaxAmount": "608990.00",
+               "MinAmount": "9490.00",
+               "OfferType": 0,
+               "PrimaryFilterID": "467",
+               "SortBy": 0,
+               "StartIndex": startindx,
+               "fvalid": "467",
+               "isScroll": true,
+               "prdFilterVal": ""
             }
-         }); 
-     }
+
+            let agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36';
+            let optionz = {
+               method: 'post',
+               body: postdata,
+               url: 'https://www.vijaysales.com/search.aspx/_getRHSProducts',
+               headers: {
+                  'User-Agent': agent,
+                  'Content-Type': 'application/json; charset=UTF-8'
+               },
+               json: true
+            };
+            String.prototype.escapeSpecialChars = function() {
+               return this.replace(/\"/g, '"')
+                  .replace(/\\u003c/g, '<')
+                  .replace(/\\u0027/g, "'")
+                  .replace(/\\u003e/g, ">")
+                  .replace(/\\r/g, "")
+                  .replace(/\\n/g, "\n");
+
+            };
+
+            request(optionz, function(error, response, body) {
+               if (error) {
+                  console.error('error posting json: ', error)
+                  throw error
+               }
+               var myJSONResult = JSON.stringify(body.d);
+               var myEscapedJSONString = myJSONResult.escapeSpecialChars();
+               var address = myEscapedJSONString.match(/href=\\'https?:\/\/\S+'/g);
+               for (var j = 0; j <= address.length; j++) {
+                  var addres = '' + address + ''.match(/https?:\/\/\S+/g);
+                  if (addres in pagesToVisit) {}
+                  else {
+                     if (addres in pagesVisited) {}
+                     else {
+                        pagesToVisit.push(addres);
+                     }
+                  }
+
+               }
+
+            });
+            startindx += 12;
+            endindx += 12;
+         }
+
+      }
+   }
+
 }
 
 function searchForContents($, url) {
@@ -113,12 +194,26 @@ function searchForContents($, url) {
 
       };
 
-      //saveToMongo.saveData(Items);
+      /*      MongoClient.connect(mongourl, function(err, db) {
+           if (err) throw err;
+           const dbo = db.db("vijaysales");
+           dbo.collection("tvproducts").insertOne(Items, function(err, res) {
+             if (err) throw err;
+
+           });
+         });*/
+
       allinformation.push(Items);
    }
 }
 
-function displayInformation($) {
-   console.log(allinformation + "Total number of items = " + allinformation.length);
+function displayInformation() {
+   console.log(allinformation.length);
 
 }
+
+pagesToVisit.push(start_url);
+crawl();
+
+ 
+
