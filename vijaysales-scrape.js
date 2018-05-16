@@ -150,16 +150,12 @@ function collectLinks($) {
                }
                var myJSONResult = JSON.stringify(body.d);
                var myEscapedJSONString = myJSONResult.escapeSpecialChars();
-               var address = myEscapedJSONString.match(/href=\\'https?:\/\/\S+'/g);
-               for (var j = 0; j <= address.length; j++) {
+               //var address = myEscapedJSONString.match(/href=\\'https?:\/\/\S+'/g);
+               var patt = /href=\\'https?:\/\/\S+/igm;
+               while (match = patt.exec(myEscapedJSONString)) {
+                  var address = '' + match + ''.substring((match.index + 1), (patt.lastIndex - 1));
                   var addres = '' + address + ''.match(/https?:\/\/\S+/g);
-                  if (addres in pagesToVisit) {}
-                  else {
-                     if (addres in pagesVisited) {}
-                     else {
-                        pagesToVisit.push(addres);
-                     }
-                  }
+                  console.log(addres);
 
                }
 
@@ -214,6 +210,3 @@ function displayInformation() {
 
 pagesToVisit.push(start_url);
 crawl();
-
- 
-
