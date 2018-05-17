@@ -162,6 +162,6 @@ function searchForContents($, url) {
 }
 
 function displayInformation($) {
-   console.log(allinformation + "Total number of items = " + allinformation.length);
+   console.log("Total number of items = " + allinformation.length);
 
 }
