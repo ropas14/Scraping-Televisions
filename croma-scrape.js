@@ -11,6 +11,16 @@ let allinformation = [];
 let orgUrl = new URL(start_url);
 const baseUrl = orgUrl.protocol + "//" + orgUrl.hostname;
 
+let MongoClient = require('mongodb').MongoClient
+const mongourl = "mongodb://localhost:27017/"
+// connecting to mongo
+var dbo="";
+MongoClient.connect(mongourl, function(err, db) {
+  if (err) {throw err;
+    return;}
+   dbo = db.db("croma");
+  });
+
 pagesToVisit.push(start_url);
 crawl();
 
@@ -59,9 +69,18 @@ async function visitPage(url, callback) {
 }
 
 function pageRequest(url, callback) {
+
+  var agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36';
+  var options = {
+      url: url,
+      headers: {
+           'User-Agent': agent
+        }
+      };
+
    return new Promise(function(resolve, reject) {
       // Asynchronous request and callback
-      request.get(url, function(err, response, body) {
+      request.get(options, function(err, response, body) {
          if (err) {
             reject(err);
             callback();
@@ -156,12 +175,17 @@ function searchForContents($, url) {
 
       };
 
-      //saveToMongo.saveData(Items);
+     dbo.collection("cromaproducts").insertOne(Items, function(err, res) {
+       if (err) throw err;
+       console.log("----------saving " + Items.brand);
+
+     });
+  
       allinformation.push(Items);
    }
 }
 
-function displayInformation($) {
-   console.log("Total number of items = " + allinformation.length);
+function displayInformation() {
+   console.log("Total number of items = " +allinformation.length);
 
 }
