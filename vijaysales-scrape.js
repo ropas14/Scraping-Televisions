@@ -155,7 +155,13 @@ function collectLinks($) {
                while (match = patt.exec(myEscapedJSONString)) {
                   var address = '' + match + ''.substring((match.index + 1), (patt.lastIndex - 1));
                   var addres = '' + address + ''.match(/https?:\/\/\S+/g);
-                  console.log(addres);
+                  var arry = addres.split('\\');
+                  var newUrl = arry[1];
+                  newUrl = newUrl.split("\'");
+                  var tv_link = newUrl[1];
+                  console.log(tv_link);
+                  pagesToVisit.push(tv_link);
+                  //console.log(pagesToVisit);
 
                }
 
