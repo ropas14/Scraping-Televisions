@@ -2,6 +2,7 @@ var request = require('request');
 var cheerio = require('cheerio');
 var URL = require('url-parse');
 
+
 const MongoClient = require('mongodb').MongoClient;
 const url = "mongodb://localhost:27017/";
 var dbo="";
@@ -71,7 +72,9 @@ function visitPage(url, callback) {
   // Add page to our set
   pagesVisited[url] = true;
   // Make the request
-  console.log("Visiting page " + url);
+  if(url.endsWith('html')){
+      console.log("Visiting page " + url);
+  }
   var requestPag = requestPage(url,callback);
   requestPag.then(function(body) {
     var $ = cheerio.load(body);
@@ -107,25 +110,40 @@ function visitPage(url, callback) {
            });
     }
     function scrapeItem($,url){
-      var brand =$("div.product-shop div.product-name span.h1").text();
-      var price =$("div.price-box p.special-price span").text();
+      var brand =$("div.product-shop div.product-name span.h1").text().trim();
+      var price ='';
+      var discount='';
+      var count=0;
+      $("div.price-box>p.special-price>span.price").each(function() {
+        if(count==0){
+          price= $(this).text().trim();
+        }else if(count==1){
+           discount= $(this).text().trim();
+        }
+        count++;
+      });
+
+
       if(!price){
-         price =$("div.price-box span#product-price-2064 span.price").text();
+         price =$("div.price-box>span.regular-price span.price").text().trim();
       }
-      var discount=$("div.price-box p.special-price span#product-price").text();
+      //
+      discount=$("div.price-box p.special-price span#product-price").text().trim();
       var items= {
                    brand:brand.trim(),
                    price:price.trim(),
                    discount:discount.trim(),
                    url:url
       };
-        console.log(` ${items.brand}== ${items.price}== ${items.discount}`);
+      console.log(` ====brand : ${items.brand}==== price : ${items.price}==== discount: ${items.discount}`);
       if( price && brand){
         numItems++;
         dbo.collection("products").insertOne(items, function(err, res) {
                 console.log(`1 document inserted. ${numItems} items scraped and saved so far`);
         });
 
+      }else{
+        console.log(` ${url}`);
       }
     }
 crawl();
